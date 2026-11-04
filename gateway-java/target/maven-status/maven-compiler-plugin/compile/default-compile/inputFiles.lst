@@ -1,0 +1,17 @@
+C:\Users\ROG STRIX\WorkBuddy AI\2026-11-04-14-24-47\lab-resource-system\gateway-java\src\main\java\com\lab\gateway\repository\PersonnelDao.java
+C:\Users\ROG STRIX\WorkBuddy AI\2026-11-04-14-24-47\lab-resource-system\gateway-java\src\main\java\com\lab\gateway\controller\MaterialProxyController.java
+C:\Users\ROG STRIX\WorkBuddy AI\2026-11-04-14-24-47\lab-resource-system\gateway-java\src\main\java\com\lab\gateway\exception\GlobalExceptionHandler.java
+C:\Users\ROG STRIX\WorkBuddy AI\2026-11-04-14-24-47\lab-resource-system\gateway-java\src\main\java\com\lab\gateway\controller\HealthController.java
+C:\Users\ROG STRIX\WorkBuddy AI\2026-11-04-14-24-47\lab-resource-system\gateway-java\src\main\java\com\lab\gateway\dto\PersonnelRequest.java
+C:\Users\ROG STRIX\WorkBuddy AI\2026-11-04-14-24-47\lab-resource-system\gateway-java\src\main\java\com\lab\gateway\service\AggregationService.java
+C:\Users\ROG STRIX\WorkBuddy AI\2026-11-04-14-24-47\lab-resource-system\gateway-java\src\main\java\com\lab\gateway\controller\BorrowProxyController.java
+C:\Users\ROG STRIX\WorkBuddy AI\2026-11-04-14-24-47\lab-resource-system\gateway-java\src\main\java\com\lab\gateway\GatewayApplication.java
+C:\Users\ROG STRIX\WorkBuddy AI\2026-11-04-14-24-47\lab-resource-system\gateway-java\src\main\java\com\lab\gateway\entity\Personnel.java
+C:\Users\ROG STRIX\WorkBuddy AI\2026-11-04-14-24-47\lab-resource-system\gateway-java\src\main\java\com\lab\gateway\client\DownstreamClient.java
+C:\Users\ROG STRIX\WorkBuddy AI\2026-11-04-14-24-47\lab-resource-system\gateway-java\src\main\java\com\lab\gateway\service\PersonnelService.java
+C:\Users\ROG STRIX\WorkBuddy AI\2026-11-04-14-24-47\lab-resource-system\gateway-java\src\main\java\com\lab\gateway\controller\AggregationController.java
+C:\Users\ROG STRIX\WorkBuddy AI\2026-11-04-14-24-47\lab-resource-system\gateway-java\src\main\java\com\lab\gateway\entity\ApiResponse.java
+C:\Users\ROG STRIX\WorkBuddy AI\2026-11-04-14-24-47\lab-resource-system\gateway-java\src\main\java\com\lab\gateway\controller\PersonnelController.java
+C:\Users\ROG STRIX\WorkBuddy AI\2026-11-04-14-24-47\lab-resource-system\gateway-java\src\main\java\com\lab\gateway\config\WebClientConfig.java
+C:\Users\ROG STRIX\WorkBuddy AI\2026-11-04-14-24-47\lab-resource-system\gateway-java\src\main\java\com\lab\gateway\config\DownstreamProperties.java
+C:\Users\ROG STRIX\WorkBuddy AI\2026-11-04-14-24-47\lab-resource-system\gateway-java\src\main\java\com\lab\gateway\exception\DownstreamServiceException.java

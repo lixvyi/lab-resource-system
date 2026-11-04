@@ -1,0 +1,349 @@
+@startuml
+' ============================================================
+' 跨语言调用的实验室资源管理系统 —— 系统类图 (UML)
+' 三个微服务由三种语言实现,统一通过 Java 网关暴露 REST API
+' ============================================================
+
+title 跨语言调用的实验室资源管理系统 —— 类图设计
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 12
+skinparam linetype ortho
+
+' ---------- 颜色方案 ----------
+skinparam class {
+  BackgroundColor #F5F8FE
+  BorderColor #2F6FED
+  FontColor #1E2430
+  ArrowColor #2F6FED
+}
+skinparam package {
+  BackgroundColor #FFFFFF
+  BorderColor #9AA7BD
+  FontColor #1E2430
+}
+skinparam stereotypeCBackgroundColor #2F6FED
+skinparam stereotypeABackgroundColor #7C3AED
+skinparam stereotypeABorderColor #5B21B6
+skinparam stereotypeAFontColor #FFFFFF
+
+' ============================================================
+package "Java Gateway (Spring Boot) :8080" as JavaPkg {
+
+  class PersonnelController <<Controller>> {
+    + list(keyword, position, status, department, page, pageSize) : ApiResponse
+    + getById(id) : ResponseEntity
+    + create(request) : ResponseEntity
+    + update(id, request) : ResponseEntity
+    + delete(id) : ResponseEntity
+    + stats() : ApiResponse
+  }
+
+  class PersonnelService <<Service>> {
+    - PersonnelDao personnelDao
+    + list(keyword, position, status, department, page, pageSize) : Map
+    + getById(id) : Optional<Personnel>
+    + create(request) : Personnel
+    + update(id, request) : boolean
+    + delete(id) : boolean
+    + statistics() : Map
+  }
+
+  class PersonnelDao <<DAO>> {
+    - JdbcTemplate jdbcTemplate
+    + findAll(keyword, position, status, department, page, pageSize) : Map
+    + findById(id) : Optional<Personnel>
+    + insert(p) : Long
+    + update(id, p) : int
+    + delete(id) : int
+    + countByPosition() : List
+    + countByStatus() : List
+  }
+
+  class Personnel <<Entity>> {
+    - Long id
+    - String name
+    - String gender
+    - Integer age
+    - String phone
+    - String email
+    - String position
+    - String department
+    - String labRoom
+    - LocalDate entryDate
+    - String status
+    - LocalDateTime createdAt
+    - LocalDateTime updatedAt
+  }
+
+  class PersonnelRequest <<DTO>> {
+    - String name
+    - String gender
+    - Integer age
+    - String phone
+    - String email
+    - String position
+    - String department
+    - String labRoom
+    - LocalDate entryDate
+    - String status
+  }
+
+  class ApiResponse<T> <<DTO>> {
+    - int code
+    - String message
+    - T data
+    - Object details
+    + ok(data) : ApiResponse
+    + error(code, message) : ApiResponse
+  }
+
+  class DownstreamClient <<CrossLangClient>> {
+    - WebClient webClient
+    - DownstreamProperties properties
+    - ObjectMapper objectMapper
+    + getMaterials(queryParams) : Map
+    + getMaterialById(id) : Map
+    + getMaterialStats() : Map
+    + getBorrows(queryParams) : Map
+    + getBorrowById(id) : Map
+    + getBorrowStats() : Map
+    - get(url, queryParams, serviceName) : Map
+    - extractData(body, serviceName) : Map
+  }
+
+  class MaterialProxyController <<ProxyController>> {
+    - DownstreamClient downstreamClient
+    + list(category, status, keyword, ...) : ApiResponse
+    + getById(id) : ResponseEntity
+    + stats() : ApiResponse
+  }
+
+  class BorrowProxyController <<ProxyController>> {
+    - DownstreamClient downstreamClient
+    + list(personnelId, materialId, status, ...) : ApiResponse
+    + getById(id) : ResponseEntity
+    + stats() : ApiResponse
+  }
+
+  class AggregationService <<Aggregator>> {
+    - PersonnelService personnelService
+    - DownstreamClient downstreamClient
+    + overview() : Map
+    + resourceStatistics() : Map
+    + personnelBorrows(personnelId) : Map
+    - safeCall(key, supplier) : Map
+  }
+
+  class AggregationController <<Controller>> {
+    - AggregationService aggregationService
+    + overview() : ApiResponse
+    + statistics() : ApiResponse
+    + personnelBorrows(id) : ApiResponse
+  }
+
+  class GlobalExceptionHandler <<Advice>> {
+    + handleDownstream(ex) : ResponseEntity
+    + handleValidation(ex) : ResponseEntity
+    + handleDuplicateKey(ex) : ResponseEntity
+    + handleIllegalArgument(ex) : ResponseEntity
+    + handleGeneric(ex) : ResponseEntity
+  }
+
+  class DownstreamServiceException <<Exception>> {
+    - String serviceName
+  }
+
+  class DownstreamProperties <<Config>> {
+    - ServiceConfig material
+    - ServiceConfig borrow
+  }
+
+  class ServiceConfig <<Config>> {
+    - String baseUrl
+    - int timeoutMs
+  }
+}
+
+' ============================================================
+package "Material Service (Node.js / Express) :8082" as NodePkg {
+
+  class MaterialController <<Controller>> {
+    + list(req) : Response
+    + stats(req) : Response
+    + getById(req) : Response
+    + create(req) : Response
+    + update(req) : Response
+    + delete(req) : Response
+  }
+
+  class MaterialRepository <<Repository>> {
+    + findAll(filters) : Object
+    + findById(id) : Object
+    + create(material) : Object
+    + update(id, material) : Object
+    + remove(id) : boolean
+    + statisticsByCategory() : Array
+    + lowStockWarnings(threshold) : Array
+  }
+
+  class DbPool <<DataAccess>> {
+    - pool
+    + getPool() : Pool
+    + query(sql, params) : Array
+    + execute(sql, params) : Result
+    + transaction(callback) : Any
+    + ping() : boolean
+  }
+
+  class MaterialConfig <<Config>> {
+    + port : number
+    + db : DBConfig
+    + downstream : DownstreamConfig
+  }
+}
+
+' ============================================================
+package "Borrow Service (Python / Flask) :8081" as PyPkg {
+
+  class BorrowController <<Controller>> {
+    + list_borrows() : Response
+    + get_borrow(id) : Response
+    + create_borrow() : Response
+    + update_borrow(id) : Response
+    + delete_borrow(id) : Response
+  }
+
+  class BorrowService <<Service>> {
+    - BorrowRepository repo
+    + list_borrows(filters) : dict
+    + get_borrow(id) : dict
+    + create_borrow(payload) : dict
+    + update_borrow(id, payload) : dict
+    + delete_borrow(id) : bool
+    + validate_payload(payload, for_create) : str
+  }
+
+  class BorrowRepository <<Repository>> {
+    - ConnectionPool pool
+    + list_borrows(filters) : dict
+    + find_by_id(id) : dict
+    + find_raw_by_id(id) : dict
+    + create(data, conn) : int
+    + update(id, data, conn) : None
+    + delete(id, conn) : bool
+    + reduce_material_quantity(id, delta, conn) : None
+    + increase_material_quantity(id, delta, conn) : None
+    + statistics() : dict
+  }
+
+  class Settings <<Config>> {
+    + PORT : int
+    + DB_HOST : str
+    + DB_USER : str
+    + DB_PASSWORD : str
+    + DB_NAME : str
+  }
+}
+
+' ============================================================
+package "MySQL" as DbPkg {
+  database "lab_resource_system" {
+    entity "personnel" as PersonnelTable {
+      * id : BIGINT
+      --
+      name : VARCHAR(50)
+      gender : VARCHAR(10)
+      age : INT
+      phone : VARCHAR(20)
+      email : VARCHAR(100)
+      position : VARCHAR(50)
+      department : VARCHAR(50)
+      lab_room : VARCHAR(50)
+      entry_date : DATE
+      status : VARCHAR(20)
+      created_at : DATETIME
+      updated_at : DATETIME
+    }
+    entity "material" as MaterialTable {
+      * id : BIGINT
+      --
+      name : VARCHAR(100)
+      category : VARCHAR(50)
+      specification : VARCHAR(200)
+      quantity : INT
+      unit : VARCHAR(20)
+      price : DECIMAL(10,2)
+      storage_room : VARCHAR(50)
+      supplier : VARCHAR(100)
+      purchase_date : DATE
+      expiry_date : DATE
+      status : VARCHAR(20)
+      created_at : DATETIME
+      updated_at : DATETIME
+    }
+    entity "borrow" as BorrowTable {
+      * id : BIGINT
+      --
+      personnel_id : BIGINT
+      material_id : BIGINT
+      quantity : INT
+      borrow_date : DATETIME
+      expect_return : DATETIME
+      actual_return : DATETIME
+      status : VARCHAR(20)
+      purpose : VARCHAR(200)
+      remark : VARCHAR(200)
+      created_at : DATETIME
+      updated_at : DATETIME
+    }
+  }
+}
+
+' ============================================================
+' ---------- Java 网关内部关系 ----------
+PersonnelController ..> PersonnelService : 调用
+PersonnelService ..> PersonnelDao : 调用
+PersonnelDao ..> PersonnelTable : SQL 读写
+PersonnelService ..> Personnel : 组装
+PersonnelController ..> PersonnelRequest : 接收
+PersonnelRequest ..> Personnel : 映射
+PersonnelController ..> ApiResponse : 包装
+PersonnelService ..> ApiResponse : 包装
+
+MaterialProxyController ..> DownstreamClient : WebClient 调用
+BorrowProxyController ..> DownstreamClient : WebClient 调用
+AggregationController ..> AggregationService : 调用
+AggregationService ..> PersonnelService : 本地聚合
+AggregationService ..> DownstreamClient : 远程聚合
+DownstreamClient ..> DownstreamProperties : 配置
+DownstreamProperties *-- ServiceConfig : 组合
+DownstreamClient ..> DownstreamServiceException : 抛出
+GlobalExceptionHandler ..> DownstreamServiceException : 捕获
+
+' ---------- 跨语言关系 ----------
+DownstreamClient ..> MaterialController : "HTTP GET /materials\n(Node.js :8082)"
+DownstreamClient ..> BorrowController : "HTTP GET /borrows\n(Python :8081)"
+
+' ---------- Node.js 内部关系 ----------
+MaterialController ..> MaterialRepository : 调用
+MaterialRepository ..> DbPool : 调用
+MaterialController ..> MaterialConfig : 读取
+DbPool ..> MaterialTable : SQL 读写
+
+' ---------- Python 内部关系 ----------
+BorrowController ..> BorrowService : 调用
+BorrowService ..> BorrowRepository : 调用
+BorrowRepository ..> BorrowTable : SQL 读写
+BorrowRepository ..> MaterialTable : 扣减/回补库存
+BorrowRepository ..> PersonnelTable : 联表带出借用人
+BorrowController ..> Settings : 读取
+
+' ---------- 数据关联 ----------
+PersonnelTable ||--o{ BorrowTable : "personnel_id"
+MaterialTable ||--o{ BorrowTable : "material_id"
+
+@enduml

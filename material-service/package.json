@@ -1,0 +1,20 @@
+{
+  "name": "material-service",
+  "version": "1.0.0",
+  "description": "实验室资源管理系统 - 物资管理微服务 (Node.js / Express)",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "node --watch src/app.js",
+    "test": "node --test test/"
+  },
+  "keywords": ["SOA", "REST", "microservice", "lab"],
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "mysql2": "^3.11.4"
+  }
+}

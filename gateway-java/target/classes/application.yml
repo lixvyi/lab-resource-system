@@ -1,0 +1,50 @@
+server:
+  port: 8080
+  address: 0.0.0.0
+
+spring:
+  application:
+    name: gateway-java
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: Asia/Shanghai
+
+  # ---------- MySQL 数据源(人员管理本地业务) ----------
+  datasource:
+    # characterEncoding 必须是 Java 字符集名 UTF-8；utf8mb4 不是合法 Java charset，
+    # 会导致中文按错误字节写入，STRICT 模式下出现 gender 列 Data too long。
+    url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:lab_resource_system}?useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:060508}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      pool-name: GatewayHikariPool
+
+  # ---------- WebClient 超时 ----------
+  cloud:
+    loadbalancer:
+      retry:
+        enabled: true
+
+# ---------- 下游异构服务地址(跨语言调用入口) ----------
+lab:
+  services:
+    material:
+      base-url: ${MATERIAL_SERVICE_URL:http://localhost:8082}
+      timeout-ms: 5000
+    borrow:
+      base-url: ${BORROW_SERVICE_URL:http://localhost:8081}
+      timeout-ms: 5000
+
+# ---------- 日志 ----------
+logging:
+  level:
+    com.lab.gateway: DEBUG
+    org.springframework.web.reactive.function.client: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

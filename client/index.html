@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>实验室资源管理系统 · 客户端</title>
+<style>
+  :root {
+    --bg: #f4f6fb;
+    --panel: #ffffff;
+    --border: #e3e8f0;
+    --text: #1e2430;
+    --muted: #6b7688;
+    --primary: #2f6fed;
+    --primary-soft: #eaf1ff;
+    --green: #16a34a;
+    --orange: #d97706;
+    --red: #dc2626;
+    --shadow: 0 1px 3px rgba(16,24,40,.06), 0 8px 24px rgba(16,24,40,.05);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", system-ui, -apple-system, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.6;
+  }
+  header {
+    background: linear-gradient(135deg, #1e3a8a, #2f6fed);
+    color: #fff; padding: 22px 28px;
+  }
+  header h1 { font-size: 21px; font-weight: 600; }
+  header p { opacity: .9; font-size: 13px; margin-top: 4px; }
+  .tabs {
+    display: flex; gap: 4px; padding: 0 20px; background: var(--panel);
+    border-bottom: 1px solid var(--border); overflow-x: auto;
+  }
+  .tab {
+    padding: 12px 20px; cursor: pointer; border: none; background: none;
+    font-size: 14px; color: var(--muted); border-bottom: 2px solid transparent;
+    white-space: nowrap; font-family: inherit;
+  }
+  .tab:hover { color: var(--primary); }
+  .tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+  main { padding: 22px; max-width: 1280px; margin: 0 auto; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px 20px; margin-bottom: 18px; box-shadow: var(--shadow);
+  }
+  .card h2 { font-size: 15px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .card h2::before {
+    content: ''; width: 3px; height: 15px; background: var(--primary); border-radius: 2px;
+  }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  input, select, button, textarea {
+    font-family: inherit; font-size: 13px; padding: 8px 11px;
+    border: 1px solid var(--border); border-radius: 6px; background: #fff; color: var(--text);
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft);
+  }
+  button {
+    background: var(--primary); color: #fff; border: none; cursor: pointer;
+    transition: background .15s;
+  }
+  button:hover { background: #2559c9; }
+  button.ghost { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
+  button.ghost:hover { background: var(--primary-soft); }
+  button.danger { background: var(--red); }
+  button.danger:hover { background: #b91c1c; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 9px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { background: #f8fafc; font-weight: 600; color: var(--muted); font-size: 12px; }
+  tbody tr:hover { background: #fafbfd; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 12px; }
+  .tag.active, .tag.in-stock, .tag.returned { background: #dcfce7; color: #166534; }
+  .tag.left, .tag.scrapped, .tag.lost { background: #fee2e2; color: #991b1b; }
+  .tag.borrowed { background: #dbeafe; color: #1e40af; }
+  .tag.overdue, .tag.low-stock { background: #fef3c7; color: #92400e; }
+  .tag.suspended { background: #f3e8ff; color: #6b21a8; }
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .stat {
+    background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px;
+  }
+  .stat .label { font-size: 12px; color: var(--muted); }
+  .stat .value { font-size: 24px; font-weight: 600; margin-top: 4px; }
+  pre {
+    background: #0f172a; color: #e2e8f0; padding: 14px; border-radius: 8px;
+    font-size: 12px; overflow-x: auto; max-height: 420px; line-height: 1.55;
+    font-family: "Cascadia Code", Consolas, monospace;
+  }
+  .path { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+  .path code {
+    background: var(--primary-soft); color: #1d4ed8; padding: 2px 6px;
+    border-radius: 4px; font-size: 12px;
+  }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .row-actions { display: flex; gap: 6px; }
+  .row-actions button { padding: 4px 10px; font-size: 12px; }
+  .empty { text-align: center; color: var(--muted); padding: 30px; font-size: 13px; }
+  .toast {
+    position: fixed; top: 20px; right: 20px; padding: 12px 18px; border-radius: 8px;
+    background: var(--green); color: #fff; font-size: 13px; box-shadow: var(--shadow);
+    opacity: 0; transform: translateY(-10px); transition: all .25s; z-index: 99;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.err { background: var(--red); }
+  label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
+  .field { margin-bottom: 12px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>跨语言调用的实验室资源管理系统</h1>
+  <p>生物实验室 · 人员管理 / 物资管理 / 借用记录 &nbsp;|&nbsp; 统一入口: Java 网关 :8080</p>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-panel="personnel">人员管理 (Java)</button>
+  <button class="tab" data-panel="material">物资管理 (Node.js)</button>
+  <button class="tab" data-panel="borrow">借用记录 (Python)</button>
+  <button class="tab" data-panel="dashboard">聚合看板</button>
+  <button class="tab" data-panel="raw">原始响应</button>
+</nav>
+
+<main>
+  <!-- ========== 人员管理 ========== -->
+  <section class="panel active" id="personnel">
+    <div class="card">
+      <h2>人员管理 · 本地业务(MySQL)—— 由 Java/Spring Boot 直接读写</h2>
+      <div class="path">访问路径: <code>GET /personnels</code> &nbsp;|&nbsp; 网关直连 MySQL,不经跨语言调用</div>
+      <div class="toolbar">
+        <input id="p-keyword" placeholder="姓名/职位/部门关键字">
+        <select id="p-position">
+          <option value="">全部职位</option>
+          <option>实验室主任</option><option>实验员</option><option>研究生</option>
+          <option>本科生</option><option>设备管理员</option>
+        </select>
+        <select id="p-status">
+          <option value="">全部状态</option>
+          <option value="ACTIVE">在职</option>
+          <option value="LEFT">离职</option>
+          <option value="SUSPENDED">停职</option>
+        </select>
+        <input id="p-pageSize" type="number" value="10" style="width:90px" title="每页条数">
+        <button onclick="loadPersonnels()">查询</button>
+        <button class="ghost" onclick="openPersonnelForm()">新增人员</button>
+        <button class="ghost" onclick="loadPersonnelStats()">统计</button>
+      </div>
+      <div id="personnel-table"></div>
+    </div>
+  </section>
+
+  <!-- ========== 物资管理 ========== -->
+  <section class="panel" id="material">
+    <div class="card">
+      <h2>物资管理 · 跨语言调用(Node.js/Express :8082)</h2>
+      <div class="path">访问路径: <code>GET /materials</code> &nbsp;→&nbsp; 网关 WebClient 转发至 <code>http://localhost:8082/materials</code></div>
+      <div class="toolbar">
+        <input id="m-keyword" placeholder="名称/规格/供应商关键字">
+        <select id="m-category">
+          <option value="">全部分类</option>
+          <option>试剂</option><option>仪器</option><option>耗材</option>
+          <option>防护用品</option><option>文档资料</option>
+        </select>
+        <select id="m-status">
+          <option value="">全部状态</option>
+          <option value="IN_STOCK">在库</option>
+          <option value="LOW_STOCK">低库存</option>
+          <option value="SCRAPPED">报废</option>
+        </select>
+        <button onclick="loadMaterials()">查询</button>
+        <button class="ghost" onclick="loadMaterialStats()">库存统计</button>
+      </div>
+      <div id="material-table"></div>
+    </div>
+  </section>
+
+  <!-- ========== 借用记录 ========== -->
+  <section class="panel" id="borrow">
+    <div class="card">
+      <h2>借用记录 · 跨语言调用(Python/Flask :8081)</h2>
+      <div class="path">访问路径: <code>GET /borrows</code> &nbsp;→&nbsp; 网关 WebClient 转发至 <code>http://localhost:8081/borrows</code></div>
+      <div class="toolbar">
+        <select id="b-status">
+          <option value="">全部状态</option>
+          <option value="BORROWED">借用中</option>
+          <option value="RETURNED">已归还</option>
+          <option value="OVERDUE">逾期</option>
+          <option value="LOST">遗失</option>
+        </select>
+        <input id="b-keyword" placeholder="用途/备注关键字">
+        <button onclick="loadBorrows()">查询</button>
+        <button class="ghost" onclick="loadBorrowStats()">借用统计</button>
+      </div>
+      <div id="borrow-table"></div>
+    </div>
+  </section>
+
+  <!-- ========== 聚合看板 ========== -->
+  <section class="panel" id="dashboard">
+    <div class="card">
+      <h2>聚合看板 —— 一次请求跨越 Java + Node.js + Python 三种语言</h2>
+      <div class="path">访问路径: <code>GET /dashboard/overview</code> &nbsp;→&nbsp; 网关并行调用三个服务并合并结果</div>
+      <div class="toolbar">
+        <button onclick="loadOverview()">加载总览</button>
+        <button class="ghost" onclick="loadStatistics()">加载三方统计</button>
+      </div>
+      <div id="dashboard-body" class="stat-grid"></div>
+    </div>
+    <div class="card">
+      <h2>聚合原始响应</h2>
+      <pre id="dashboard-raw">点击上方按钮加载...</pre>
+    </div>
+  </section>
+
+  <!-- ========== 原始响应 ========== -->
+  <section class="panel" id="raw">
+    <div class="card">
+      <h2>原始 JSON 响应</h2>
+      <div class="toolbar">
+        <input id="raw-url" placeholder="输入相对路径, 如 /personnels?page=1" style="flex:1;min-width:260px">
+        <button onclick="callRaw()">发送请求</button>
+      </div>
+      <pre id="raw-body">// 请求结果将显示在这里</pre>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://localhost:8080';
+
+document.querySelectorAll('.tab').forEach(t => {
+  t.onclick = () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById(t.dataset.panel).classList.add('active');
+  };
+});
+
+function toast(msg, isErr) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (isErr ? ' err' : '');
+  setTimeout(() => el.className = 'toast', 2600);
+}
+
+async function api(path) {
+  const res = await fetch(API + path);
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || ('HTTP ' + res.status));
+  return json;
+}
+
+function statusTag(s) {
+  const map = {
+    ACTIVE: 'active', LEFT: 'left', SUSPENDED: 'suspended',
+    IN_STOCK: 'in-stock', LOW_STOCK: 'low-stock', SCRAPPED: 'scrapped',
+    BORROWED: 'borrowed', RETURNED: 'returned', OVERDUE: 'overdue', LOST: 'lost'
+  };
+  return `<span class="tag ${map[s] || ''}">${s}</span>`;
+}
+
+// ---------------- 人员管理 ----------------
+async function loadPersonnels() {
+  const q = new URLSearchParams();
+  const kw = document.getElementById('p-keyword').value.trim();
+  const pos = document.getElementById('p-position').value;
+  const st = document.getElementById('p-status').value;
+  if (kw) q.set('keyword', kw);
+  if (pos) q.set('position', pos);
+  if (st) q.set('status', st);
+  q.set('pageSize', document.getElementById('p-pageSize').value || 10);
+
+  try {
+    const json = await api('/personnels?' + q);
+    const d = json.data;
+    let html = `<table><thead><tr>
+      <th>ID</th><th>姓名</th><th>性别</th><th>年龄</th><th>职位</th>
+      <th>部门</th><th>房间</th><th>电话</th><th>状态</th><th>操作</th>
+    </tr></thead><tbody>`;
+    if (!d.items.length) {
+      html = '<div class="empty">暂无人员数据</div>';
+    } else {
+      d.items.forEach(p => {
+        html += `<tr>
+          <td>${p.id}</td><td>${p.name}</td><td>${p.gender}</td><td>${p.age}</td>
+          <td>${p.position}</td><td>${p.department || '-'}</td><td>${p.labRoom || '-'}</td>
+          <td>${p.phone || '-'}</td><td>${statusTag(p.status)}</td>
+          <td class="row-actions">
+            <button class="ghost" onclick="deletePersonnel(${p.id})">删除</button>
+          </td></tr>`;
+      });
+    }
+    html += `</tbody></table>
+      <p style="margin-top:10px;font-size:12px;color:var(--muted)">
+        共 ${d.total} 条 · 第 ${d.page} / ${d.totalPages} 页</p>`;
+    document.getElementById('personnel-table').innerHTML = html;
+    toast('人员查询成功: ' + d.total + ' 条');
+  } catch (e) {
+    document.getElementById('personnel-table').innerHTML =
+      `<div class="empty">查询失败: ${e.message}</div>`;
+    toast(e.message, true);
+  }
+}
+
+async function loadPersonnelStats() {
+  try {
+    const json = await api('/personnels/stats');
+    document.getElementById('personnel-table').innerHTML = `<pre>${
+      JSON.stringify(json.data, null, 2)}</pre>`;
+  } catch (e) { toast(e.message, true); }
+}
+
+async function deletePersonnel(id) {
+  if (!confirm('确认删除人员 ID=' + id + ' ?')) return;
+  try {
+    await api('/personnels/' + id);
+    toast('删除成功');
+    loadPersonnels();
+  } catch (e) { toast(e.message, true); }
+}
+
+function openPersonnelForm() {
+  const name = prompt('姓名');
+  if (!name) return;
+  const gender = prompt('性别(男/女)', '男');
+  const age = prompt('年龄', '25');
+  const position = prompt('职位', '研究生');
+  const phone = prompt('手机号(可留空)', '');
+  const email = prompt('邮箱(可留空)', '');
+  fetch(API + '/personnels', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      name, gender, age: Number(age), position,
+      phone: phone || null, email: email || null,
+      department: '生物科学学院', labRoom: '生物楼B201'
+    })
+  }).then(r => r.json()).then(j => {
+    if (j.code === 0) { toast('新增成功'); loadPersonnels(); }
+    else toast(j.message + ' ' + JSON.stringify(j.details || ''), true);
+  }).catch(e => toast(e.message, true));
+}
+
+// ---------------- 物资管理 ----------------
+async function loadMaterials() {
+  const q = new URLSearchParams();
+  const kw = document.getElementById('m-keyword').value.trim();
+  const cat = document.getElementById('m-category').value;
+  const st = document.getElementById('m-status').value;
+  if (kw) q.set('keyword', kw);
+  if (cat) q.set('category', cat);
+  if (st) q.set('status', st);
+  q.set('pageSize', 20);
+
+  try {
+    const json = await api('/materials?' + q);
+    const d = json.data;
+    let html = `<table><thead><tr>
+      <th>ID</th><th>名称</th><th>分类</th><th>规格</th><th>数量</th><th>单位</th>
+      <th>单价</th><th>存放房间</th><th>有效期</th><th>状态</th>
+    </tr></thead><tbody>`;
+    if (!d.items.length) {
+      html = '<div class="empty">暂无物资数据</div>';
+    } else {
+      d.items.forEach(m => {
+        html += `<tr>
+          <td>${m.id}</td><td>${m.name}</td><td>${m.category}</td>
+          <td>${m.specification || '-'}</td><td>${m.quantity}</td><td>${m.unit}</td>
+          <td>¥${m.price}</td><td>${m.storage_room || '-'}</td>
+          <td>${m.expiry_date || '-'}</td><td>${statusTag(m.status)}</td></tr>`;
+      });
+    }
+    html += `</tbody></table>
+      <p style="margin-top:10px;font-size:12px;color:var(--muted)">
+        共 ${d.total} 条 · 第 ${d.page} / ${d.totalPages} 页 &nbsp;|&nbsp; 数据来自 Node.js/Express 服务</p>`;
+    document.getElementById('material-table').innerHTML = html;
+    toast('物资查询成功: ' + d.total + ' 条(跨语言调用)');
+  } catch (e) {
+    document.getElementById('material-table').innerHTML =
+      `<div class="empty">查询失败: ${e.message}</div>`;
+    toast(e.message, true);
+  }
+}
+
+async function loadMaterialStats() {
+  try {
+    const json = await api('/materials/stats');
+    document.getElementById('material-table').innerHTML = `<pre>${
+      JSON.stringify(json.data, null, 2)}</pre>`;
+  } catch (e) { toast(e.message, true); }
+}
+
+// ---------------- 借用记录 ----------------
+async function loadBorrows() {
+  const q = new URLSearchParams();
+  const st = document.getElementById('b-status').value;
+  const kw = document.getElementById('b-keyword').value.trim();
+  if (st) q.set('status', st);
+  if (kw) q.set('keyword', kw);
+  q.set('pageSize', 20);
+
+  try {
+    const json = await api('/borrows?' + q);
+    const d = json.data;
+    let html = `<table><thead><tr>
+      <th>ID</th><th>借用人</th><th>物资</th><th>数量</th><th>借出时间</th>
+      <th>预计归还</th><th>实际归还</th><th>状态</th><th>用途</th>
+    </tr></thead><tbody>`;
+    if (!d.items.length) {
+      html = '<div class="empty">暂无借用记录</div>';
+    } else {
+      d.items.forEach(b => {
+        html += `<tr>
+          <td>${b.id}</td><td>${b.personnel_name || b.personnel_id}</td>
+          <td>${b.material_name || b.material_id}</td><td>${b.quantity}</td>
+          <td>${b.borrow_date}</td><td>${b.expect_return || '-'}</td>
+          <td>${b.actual_return || '-'}</td><td>${statusTag(b.status)}</td>
+          <td>${b.purpose || '-'}</td></tr>`;
+      });
+    }
+    html += `</tbody></table>
+      <p style="margin-top:10px;font-size:12px;color:var(--muted)">
+        共 ${d.total} 条 · 第 ${d.page} / ${d.totalPages} 页 &nbsp;|&nbsp; 数据来自 Python/Flask 服务</p>`;
+    document.getElementById('borrow-table').innerHTML = html;
+    toast('借用记录查询成功: ' + d.total + ' 条(跨语言调用)');
+  } catch (e) {
+    document.getElementById('borrow-table').innerHTML =
+      `<div class="empty">查询失败: ${e.message}</div>`;
+    toast(e.message, true);
+  }
+}
+
+async function loadBorrowStats() {
+  try {
+    const json = await api('/borrows/stats');
+    document.getElementById('borrow-table').innerHTML = `<pre>${
+      JSON.stringify(json.data, null, 2)}</pre>`;
+  } catch (e) { toast(e.message, true); }
+}
+
+// ---------------- 聚合看板 ----------------
+async function loadOverview() {
+  try {
+    const json = await api('/dashboard/overview');
+    document.getElementById('dashboard-raw').textContent = JSON.stringify(json, null, 2);
+    const d = json.data || {};
+    const p = d.personnel || {}, m = d.materials || {}, b = d.borrows || {};
+    const avail = (x) => x && x.available === false;
+    document.getElementById('dashboard-body').innerHTML = `
+      <div class="stat"><div class="label">人员总数(Java)</div>
+        <div class="value">${p.total ?? '-'}</div></div>
+      <div class="stat"><div class="label">物资总数(Node.js)</div>
+        <div class="value">${m.total ?? '-'}</div></div>
+      <div class="stat"><div class="label">借用记录(Python)</div>
+        <div class="value">${b.total ?? '-'}</div></div>
+      <div class="stat"><div class="label">Node 服务</div>
+        <div class="value" style="font-size:15px">${avail(m) ? '不可用' : '正常'}</div></div>
+      <div class="stat"><div class="label">Python 服务</div>
+        <div class="value" style="font-size:15px">${avail(b) ? '不可用' : '正常'}</div></div>`;
+    toast('聚合看板加载成功');
+  } catch (e) {
+    document.getElementById('dashboard-body').innerHTML =
+      `<div class="empty">聚合失败: ${e.message}</div>`;
+    toast(e.message, true);
+  }
+}
+
+async function loadStatistics() {
+  try {
+    const json = await api('/dashboard/statistics');
+    document.getElementById('dashboard-raw').textContent = JSON.stringify(json, null, 2);
+    toast('三方统计加载成功');
+  } catch (e) { toast(e.message, true); }
+}
+
+// ---------------- 原始响应 ----------------
+async function callRaw() {
+  const path = document.getElementById('raw-url').value.trim() || '/personnels';
+  try {
+    const res = await fetch(API + path);
+    const text = await res.text();
+    let pretty = text;
+    try { pretty = JSON.stringify(JSON.parse(text), null, 2); } catch (e) {}
+    document.getElementById('raw-body').textContent =
+      `HTTP ${res.status} ${res.statusText}\n\n${pretty}`;
+  } catch (e) {
+    document.getElementById('raw-body').textContent = '请求失败: ' + e.message;
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => loadPersonnels());
+</script>
+</body>
+</html>
