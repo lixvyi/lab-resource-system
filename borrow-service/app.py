@@ -7,6 +7,15 @@
 数据库 : MySQL (PyMySQL 连接池)
 """
 
+import sys
+import os
+from pathlib import Path
+
+# 将当前目录添加到 sys.path，确保 'app' 模块能被正确识别
+current_dir = Path(__file__).resolve().parent
+if str(current_dir) not in sys.path:
+    sys.path.insert(0, str(current_dir))
+
 from flask import Flask, jsonify, request
 import pymysql
 from pymysql.cursors import DictCursor

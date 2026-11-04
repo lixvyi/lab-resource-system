@@ -6,9 +6,16 @@
 """
 
 import logging
+import sys
+from pathlib import Path
 import pymysql
 from pymysql.cursors import DictCursor
 from contextlib import contextmanager
+
+# 兼容直接运行脚本的情况
+current_dir = Path(__file__).resolve().parent.parent
+if str(current_dir) not in sys.path:
+    sys.path.insert(0, str(current_dir))
 
 try:
     from dbutils.pooled_db import PooledDB

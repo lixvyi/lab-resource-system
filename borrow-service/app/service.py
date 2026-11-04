@@ -9,7 +9,14 @@
 """
 
 import logging
+import sys
+from pathlib import Path
 from datetime import datetime
+
+# 兼容直接运行脚本的情况
+current_dir = Path(__file__).resolve().parent.parent
+if str(current_dir) not in sys.path:
+    sys.path.insert(0, str(current_dir))
 
 from app.repository import STATUS_BORROWED, STATUS_RETURNED, STATUS_OVERDUE, VALID_STATUS
 
