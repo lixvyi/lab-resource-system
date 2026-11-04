@@ -81,6 +81,18 @@ public class DownstreamClient {
         return get(properties.getMaterial().getBaseUrl() + "/materials/" + id, null, "Node.js 物资服务");
     }
 
+    public Map<String, Object> createMaterial(Map<String, Object> material) {
+        return post(properties.getMaterial().getBaseUrl() + "/materials", material, "Node.js 物资服务");
+    }
+
+    public Map<String, Object> updateMaterial(Long id, Map<String, Object> material) {
+        return put(properties.getMaterial().getBaseUrl() + "/materials/" + id, material, "Node.js 物资服务");
+    }
+
+    public Map<String, Object> deleteMaterial(Long id) {
+        return delete(properties.getMaterial().getBaseUrl() + "/materials/" + id, "Node.js 物资服务");
+    }
+
     /**
      * 调用 Python 借用服务:GET /borrows
      */
@@ -95,6 +107,18 @@ public class DownstreamClient {
         return get(properties.getBorrow().getBaseUrl() + "/borrows/" + id, null, "Python 借用服务");
     }
 
+    public Map<String, Object> createBorrow(Map<String, Object> borrow) {
+        return post(properties.getBorrow().getBaseUrl() + "/borrows", borrow, "Python 借用服务");
+    }
+
+    public Map<String, Object> updateBorrow(Long id, Map<String, Object> borrow) {
+        return put(properties.getBorrow().getBaseUrl() + "/borrows/" + id, borrow, "Python 借用服务");
+    }
+
+    public Map<String, Object> deleteBorrow(Long id) {
+        return delete(properties.getBorrow().getBaseUrl() + "/borrows/" + id, "Python 借用服务");
+    }
+
     /**
      * 调用 Python 借用服务:GET /borrows/stats
      */
@@ -103,7 +127,7 @@ public class DownstreamClient {
     }
 
     // ------------------------------------------------------------------
-    // 内部通用 GET 方法
+    // 内部通用 HTTP 方法
     // ------------------------------------------------------------------
     private Map<String, Object> get(String url, Map<String, String> queryParams, String serviceName) {
         // 组装完整 URI(含查询参数)
@@ -142,6 +166,56 @@ public class DownstreamClient {
             log.error("[跨语言调用] GET {} 调用失败: {}", requestUrl, e.getMessage());
             throw new DownstreamServiceException(
                     "无法连接 " + serviceName + "(" + requestUrl + "): " + e.getMessage(), e);
+        }
+    }
+
+    private Map<String, Object> post(String url, Object payload, String serviceName) {
+        try {
+            String body = webClient.post()
+                    .uri(url)
+                    .bodyValue(payload)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .timeout(Duration.ofMillis(properties.getMaterial().getTimeoutMs()))
+                    .block();
+            log.info("[跨语言调用] POST {} -> 200", url);
+            return extractData(body, serviceName);
+        } catch (Exception e) {
+            log.error("[跨语言调用] POST {} 调用失败: {}", url, e.getMessage());
+            throw new DownstreamServiceException("调用 " + serviceName + " 失败: " + e.getMessage(), e);
+        }
+    }
+
+    private Map<String, Object> put(String url, Object payload, String serviceName) {
+        try {
+            String body = webClient.put()
+                    .uri(url)
+                    .bodyValue(payload)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .timeout(Duration.ofMillis(properties.getMaterial().getTimeoutMs()))
+                    .block();
+            log.info("[跨语言调用] PUT {} -> 200", url);
+            return extractData(body, serviceName);
+        } catch (Exception e) {
+            log.error("[跨语言调用] PUT {} 调用失败: {}", url, e.getMessage());
+            throw new DownstreamServiceException("调用 " + serviceName + " 失败: " + e.getMessage(), e);
+        }
+    }
+
+    private Map<String, Object> delete(String url, String serviceName) {
+        try {
+            String body = webClient.delete()
+                    .uri(url)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .timeout(Duration.ofMillis(properties.getMaterial().getTimeoutMs()))
+                    .block();
+            log.info("[跨语言调用] DELETE {} -> 200", url);
+            return extractData(body, serviceName);
+        } catch (Exception e) {
+            log.error("[跨语言调用] DELETE {} 调用失败: {}", url, e.getMessage());
+            throw new DownstreamServiceException("调用 " + serviceName + " 失败: " + e.getMessage(), e);
         }
     }
 

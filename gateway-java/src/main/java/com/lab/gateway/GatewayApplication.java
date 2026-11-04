@@ -21,10 +21,9 @@ public class GatewayApplication {
 
     public static void main(String[] args) {
         // 实验要求网关固定 8080。部分运行环境会注入 SERVER_PORT=0，
-        // Spring Boot 会把它映射为随机端口(如 57114)。系统属性优先于环境变量。
-        if (System.getProperty("server.port") == null) {
-            System.setProperty("server.port", "8080");
-        }
+        // Spring Boot 会把它映射为随机端口(如 57114)。
+        // 强制覆盖系统属性与环境变量。
+        System.setProperty("server.port", "8080");
         SpringApplication.run(GatewayApplication.class, args);
     }
 

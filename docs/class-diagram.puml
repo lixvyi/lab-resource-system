@@ -107,11 +107,20 @@ package "Java Gateway (Spring Boot) :8080" as JavaPkg {
     - ObjectMapper objectMapper
     + getMaterials(queryParams) : Map
     + getMaterialById(id) : Map
+    + createMaterial(material) : Map
+    + updateMaterial(id, material) : Map
+    + deleteMaterial(id) : Map
     + getMaterialStats() : Map
     + getBorrows(queryParams) : Map
     + getBorrowById(id) : Map
+    + createBorrow(borrow) : Map
+    + updateBorrow(id, borrow) : Map
+    + deleteBorrow(id) : Map
     + getBorrowStats() : Map
     - get(url, queryParams, serviceName) : Map
+    - post(url, payload, serviceName) : Map
+    - put(url, payload, serviceName) : Map
+    - delete(url, serviceName) : Map
     - extractData(body, serviceName) : Map
   }
 
@@ -119,6 +128,9 @@ package "Java Gateway (Spring Boot) :8080" as JavaPkg {
     - DownstreamClient downstreamClient
     + list(category, status, keyword, ...) : ApiResponse
     + getById(id) : ResponseEntity
+    + create(material) : ResponseEntity
+    + update(id, material) : ApiResponse
+    + delete(id) : ApiResponse
     + stats() : ApiResponse
   }
 
@@ -126,6 +138,9 @@ package "Java Gateway (Spring Boot) :8080" as JavaPkg {
     - DownstreamClient downstreamClient
     + list(personnelId, materialId, status, ...) : ApiResponse
     + getById(id) : ResponseEntity
+    + create(borrow) : ResponseEntity
+    + update(id, borrow) : ApiResponse
+    + delete(id) : ApiResponse
     + stats() : ApiResponse
   }
 

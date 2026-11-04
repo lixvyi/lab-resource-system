@@ -3,8 +3,12 @@ package com.lab.gateway.controller;
 import com.lab.gateway.client.DownstreamClient;
 import com.lab.gateway.entity.ApiResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -75,5 +79,23 @@ public class BorrowProxyController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getById(@PathVariable Long id) {
         Map<String, Object> data = downstreamClient.getBorrowById(id);
         return ResponseEntity.ok(ApiResponse.ok(data, "已通过 Java 网关调用 Python 借用服务"));
+    }
+
+    @PostMapping("/borrows")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> create(@RequestBody Map<String, Object> borrow) {
+        Map<String, Object> data = downstreamClient.createBorrow(borrow);
+        return ResponseEntity.status(201).body(ApiResponse.ok(data, "借用记录创建成功(via Gateway)"));
+    }
+
+    @PutMapping("/borrows/{id}")
+    public ApiResponse<Map<String, Object>> update(@PathVariable Long id, @RequestBody Map<String, Object> borrow) {
+        Map<String, Object> data = downstreamClient.updateBorrow(id, borrow);
+        return ApiResponse.ok(data, "借用记录更新成功(via Gateway)");
+    }
+
+    @DeleteMapping("/borrows/{id}")
+    public ApiResponse<Map<String, Object>> delete(@PathVariable Long id) {
+        Map<String, Object> data = downstreamClient.deleteBorrow(id);
+        return ApiResponse.ok(data, "借用记录删除成功(via Gateway)");
     }
 }
