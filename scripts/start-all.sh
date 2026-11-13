@@ -13,8 +13,16 @@ echo ""
 echo "[1/4] 初始化 MySQL 数据库 ..."
 if command -v mysql >/dev/null 2>&1; then
   DB_USER="${DB_USER:-root}"
-  DB_PASS="${DB_PASSWORD:-lab123456}"
-  mysql -u "$DB_USER" -p"$DB_PASS" < "$ROOT/db/init.sql" && echo "  数据库初始化完成"
+  if [ -z "${DB_PASSWORD:-}" ] && [ -f "$ROOT/material-service/.env" ]; then
+    DB_PASSWORD="$(sed -n 's/^DB_PASSWORD=//p' "$ROOT/material-service/.env" | head -n 1)"
+  fi
+  if [ -z "${DB_PASSWORD:-}" ]; then
+    echo "请设置环境变量 DB_PASSWORD，或在 material-service/.env 中填写"
+    exit 1
+  fi
+  export DB_PASSWORD
+  DB_PASS="$DB_PASSWORD"
+  mysql -u "$DB_USER" -p"$DB_PASS" --default-character-set=utf8mb4 < "$ROOT/db/init.sql" && echo "  数据库初始化完成"
 else
   echo "  未找到 mysql 命令,请手动执行 db/init.sql"
 fi
@@ -48,7 +56,7 @@ else
 fi
 if [ -n "$MVN_CMD" ]; then
   "$MVN_CMD" -q clean package -DskipTests
-  nohup java -jar target/gateway-java.jar > "$ROOT/scripts/gateway-java.log" 2>&1 &
+  nohup java -Dfile.encoding=UTF-8 -Dserver.port=8080 -jar target/gateway-java.jar > "$ROOT/scripts/gateway-java.log" 2>&1 &
   echo "  PID: $!  日志: scripts/gateway-java.log"
 else
   echo "  未找到 mvn,请手动构建并启动"

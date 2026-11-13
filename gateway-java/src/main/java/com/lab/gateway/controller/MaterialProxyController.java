@@ -2,6 +2,7 @@ package com.lab.gateway.controller;
 
 import com.lab.gateway.client.DownstreamClient;
 import com.lab.gateway.entity.ApiResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,7 +21,6 @@ import java.util.Map;
  * <p>
  * 客户端访问 {@code http://localhost:8080/materials/...},
  * 网关内部通过 WebClient 调用 {@code http://localhost:8082/materials/...}。
- * 这样客户端只与 Java 网关打交道,实现了"统一入口"。
  */
 @RestController
 public class MaterialProxyController {
@@ -31,10 +31,6 @@ public class MaterialProxyController {
         this.downstreamClient = downstreamClient;
     }
 
-    /**
-     * GET /materials
-     * 代理查询物资列表
-     */
     @GetMapping("/materials")
     public ApiResponse<Map<String, Object>> list(
             @RequestParam(required = false) String category,
@@ -64,18 +60,12 @@ public class MaterialProxyController {
         return ApiResponse.ok(data, "已通过 Java 网关调用 Node.js 物资服务");
     }
 
-    /**
-     * GET /materials/stats
-     */
     @GetMapping("/materials/stats")
     public ApiResponse<Map<String, Object>> stats() {
         Map<String, Object> data = downstreamClient.getMaterialStats();
         return ApiResponse.ok(data, "已通过 Java 网关调用 Node.js 物资服务");
     }
 
-    /**
-     * GET /materials/{id}
-     */
     @GetMapping("/materials/{id}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getById(@PathVariable Long id) {
         Map<String, Object> data = downstreamClient.getMaterialById(id);
@@ -83,21 +73,23 @@ public class MaterialProxyController {
     }
 
     @PostMapping("/materials")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> create(@RequestBody Map<String, Object> material) {
-        Map<String, Object> data = downstreamClient.createMaterial(material);
-        return ResponseEntity.status(201).body(ApiResponse.ok(data, "物资创建成功(via Gateway)"));
+    public ResponseEntity<ApiResponse<Map<String, Object>>> create(@RequestBody Map<String, Object> body) {
+        Map<String, Object> data = downstreamClient.createMaterial(body);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.ok(data, "已通过 Java 网关在 Node.js 物资服务中创建记录"));
     }
 
     @PutMapping("/materials/{id}")
-    public ApiResponse<Map<String, Object>> update(@PathVariable Long id, @RequestBody Map<String, Object> material) {
-        Map<String, Object> data = downstreamClient.updateMaterial(id, material);
-        return ApiResponse.ok(data, "物资更新成功(via Gateway)");
+    public ResponseEntity<ApiResponse<Map<String, Object>>> update(
+            @PathVariable Long id, @RequestBody Map<String, Object> body) {
+        Map<String, Object> data = downstreamClient.updateMaterial(id, body);
+        return ResponseEntity.ok(ApiResponse.ok(data, "已通过 Java 网关更新 Node.js 物资服务记录"));
     }
 
     @DeleteMapping("/materials/{id}")
-    public ApiResponse<Map<String, Object>> delete(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> delete(@PathVariable Long id) {
         Map<String, Object> data = downstreamClient.deleteMaterial(id);
-        return ApiResponse.ok(data, "物资删除成功(via Gateway)");
+        return ResponseEntity.ok(ApiResponse.ok(data, "已通过 Java 网关删除 Node.js 物资服务记录"));
     }
 
     private static void putIfNotNull(Map<String, String> map, String key, Object value) {

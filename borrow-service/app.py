@@ -7,15 +7,6 @@
 数据库 : MySQL (PyMySQL 连接池)
 """
 
-import sys
-import os
-from pathlib import Path
-
-# 将当前目录添加到 sys.path，确保 'app' 模块能被正确识别
-current_dir = Path(__file__).resolve().parent
-if str(current_dir) not in sys.path:
-    sys.path.insert(0, str(current_dir))
-
 from flask import Flask, jsonify, request
 import pymysql
 from pymysql.cursors import DictCursor
@@ -67,6 +58,16 @@ def health():
 # ------------------------------------------------------------------
 # 借用记录 CRUD
 # ------------------------------------------------------------------
+
+@app.route("/borrows/stats", methods=["GET"])
+def borrow_stats():
+    """GET /borrows/stats  借用状态 / 高频人员 / 高频物资统计"""
+    try:
+        return ok(service.statistics())
+    except Exception as exc:  # noqa: BLE001
+        app.logger.exception("GET /borrows/stats 失败")
+        return fail("查询借用统计失败", 500, str(exc))
+
 
 @app.route("/borrows", methods=["GET"])
 def list_borrows():

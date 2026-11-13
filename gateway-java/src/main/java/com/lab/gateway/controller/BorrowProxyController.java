@@ -2,6 +2,7 @@ package com.lab.gateway.controller;
 
 import com.lab.gateway.client.DownstreamClient;
 import com.lab.gateway.entity.ApiResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,9 +18,6 @@ import java.util.Map;
 
 /**
  * 借用服务代理 Controller —— 转发到 Python/Flask 服务。
- * <p>
- * 客户端访问 {@code http://localhost:8080/borrows/...},
- * 网关内部通过 WebClient 调用 {@code http://localhost:8081/borrows/...}。
  */
 @RestController
 public class BorrowProxyController {
@@ -30,10 +28,6 @@ public class BorrowProxyController {
         this.downstreamClient = downstreamClient;
     }
 
-    /**
-     * GET /borrows
-     * 代理查询借用记录
-     */
     @GetMapping("/borrows")
     public ApiResponse<Map<String, Object>> list(
             @RequestParam(required = false) Long personnelId,
@@ -63,18 +57,12 @@ public class BorrowProxyController {
         return ApiResponse.ok(data, "已通过 Java 网关调用 Python 借用服务");
     }
 
-    /**
-     * GET /borrows/stats
-     */
     @GetMapping("/borrows/stats")
     public ApiResponse<Map<String, Object>> stats() {
         Map<String, Object> data = downstreamClient.getBorrowStats();
         return ApiResponse.ok(data, "已通过 Java 网关调用 Python 借用服务");
     }
 
-    /**
-     * GET /borrows/{id}
-     */
     @GetMapping("/borrows/{id}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getById(@PathVariable Long id) {
         Map<String, Object> data = downstreamClient.getBorrowById(id);
@@ -82,20 +70,22 @@ public class BorrowProxyController {
     }
 
     @PostMapping("/borrows")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> create(@RequestBody Map<String, Object> borrow) {
-        Map<String, Object> data = downstreamClient.createBorrow(borrow);
-        return ResponseEntity.status(201).body(ApiResponse.ok(data, "借用记录创建成功(via Gateway)"));
+    public ResponseEntity<ApiResponse<Map<String, Object>>> create(@RequestBody Map<String, Object> body) {
+        Map<String, Object> data = downstreamClient.createBorrow(body);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.ok(data, "已通过 Java 网关在 Python 借用服务中创建记录"));
     }
 
     @PutMapping("/borrows/{id}")
-    public ApiResponse<Map<String, Object>> update(@PathVariable Long id, @RequestBody Map<String, Object> borrow) {
-        Map<String, Object> data = downstreamClient.updateBorrow(id, borrow);
-        return ApiResponse.ok(data, "借用记录更新成功(via Gateway)");
+    public ResponseEntity<ApiResponse<Map<String, Object>>> update(
+            @PathVariable Long id, @RequestBody Map<String, Object> body) {
+        Map<String, Object> data = downstreamClient.updateBorrow(id, body);
+        return ResponseEntity.ok(ApiResponse.ok(data, "已通过 Java 网关更新 Python 借用服务记录"));
     }
 
     @DeleteMapping("/borrows/{id}")
-    public ApiResponse<Map<String, Object>> delete(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> delete(@PathVariable Long id) {
         Map<String, Object> data = downstreamClient.deleteBorrow(id);
-        return ApiResponse.ok(data, "借用记录删除成功(via Gateway)");
+        return ResponseEntity.ok(ApiResponse.ok(data, "已通过 Java 网关删除 Python 借用服务记录"));
     }
 }

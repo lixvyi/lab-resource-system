@@ -1,0 +1,36 @@
+# 依赖与虚拟环境
+node_modules/
+material-service/node_modules/
+borrow-service/venv/
+.venv/
+
+# Python 缓存
+**/__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Java / Maven 编译产物
+gateway-java/target/
+*.class
+
+# 本地安装的构建工具（Maven 发行包）
+tools/
+
+# 环境变量与密钥（示例文件 .env.example 仍可提交）
+.env
+**/.env
+
+# 编辑器与系统文件
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 日志与临时文件
+*.log
+scripts/*.log
+_taskbook.txt
+docs/_task.txt
+docs/_report_template.txt

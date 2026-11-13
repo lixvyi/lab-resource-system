@@ -2,7 +2,11 @@ package com.lab.gateway;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.web.server.WebServerFactoryCustomizer;
+import org.springframework.boot.web.servlet.server.ConfigurableServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.web.reactive.function.client.WebClient;
 
 /**
@@ -20,11 +24,26 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class GatewayApplication {
 
     public static void main(String[] args) {
-        // 实验要求网关固定 8080。部分运行环境会注入 SERVER_PORT=0，
-        // Spring Boot 会把它映射为随机端口(如 57114)。
-        // 强制覆盖系统属性与环境变量。
+        // 实验要求网关固定 8080。部分 IDE / 代理会注入 SERVER_PORT=0 或
+        // --server.port=0，Spring Boot 会把它映射成随机端口(如 57114)。
         System.setProperty("server.port", "8080");
-        SpringApplication.run(GatewayApplication.class, args);
+        String[] filtered = java.util.Arrays.stream(args == null ? new String[0] : args)
+                .filter(a -> a != null && !a.startsWith("--server.port") && !a.startsWith("--SERVER_PORT"))
+                .toArray(String[]::new);
+        SpringApplication app = new SpringApplication(GatewayApplication.class);
+        app.setDefaultProperties(java.util.Map.of("server.port", "8080"));
+        app.run(filtered);
+    }
+
+    /**
+     * 在全部配置源（含 SERVER_PORT=0、--server.port=0）绑定完成之后再写死端口。
+     * 默认的 ServletWebServerFactoryCustomizer 顺序是 0，这里用最低优先级盖掉它，
+     * 避免 IDE 把 Tomcat 绑到随机端口（例如 57114）。
+     */
+    @Bean
+    @Order(Ordered.LOWEST_PRECEDENCE)
+    public WebServerFactoryCustomizer<ConfigurableServletWebServerFactory> pinGatewayPort() {
+        return factory -> factory.setPort(8080);
     }
 
     /**

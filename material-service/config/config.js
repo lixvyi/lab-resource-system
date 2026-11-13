@@ -6,7 +6,10 @@
 require('dotenv').config();
 
 module.exports = {
-  port: parseInt(process.env.PORT || '8082', 10),
+  port: (() => {
+    const n = parseInt(process.env.PORT || '8082', 10);
+    return Number.isFinite(n) && n > 0 ? n : 8082;
+  })(),
   serviceName: 'material-service',
   serviceVersion: '1.0.0',
 
@@ -14,7 +17,7 @@ module.exports = {
     host: process.env.DB_HOST || '127.0.0.1',
     port: parseInt(process.env.DB_PORT || '3306', 10),
     user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || 'lab123456',
+    password: process.env.DB_PASSWORD || '',
     name: process.env.DB_NAME || 'lab_resource_system',
     connectionLimit: parseInt(process.env.DB_POOL_SIZE || '10', 10)
   },

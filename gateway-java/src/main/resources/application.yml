@@ -1,4 +1,5 @@
 server:
+  # 禁止被 SERVER_PORT=0 抢成随机端口；启动类还会再强制写一次系统属性
   port: 8080
   address: 0.0.0.0
 
@@ -17,9 +18,10 @@ spring:
     # 会导致中文按错误字节写入，STRICT 模式下出现 gender 列 Data too long。
     url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:lab_resource_system}?useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
     username: ${DB_USER:root}
-    password: ${DB_PASSWORD:060508}
+    password: ${DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
+      connection-init-sql: SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci
       maximum-pool-size: 10
       minimum-idle: 2
       connection-timeout: 30000

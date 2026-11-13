@@ -36,6 +36,20 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 下游已给出明确业务错误(库存不足、资源不存在等) —— 原样透传状态码
+     */
+    @ExceptionHandler(DownstreamHttpException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDownstreamHttp(DownstreamHttpException ex) {
+        log.warn("[网关] 下游业务错误 HTTP {}: {}", ex.getHttpStatus(), ex.getMessage());
+        HttpStatus status = HttpStatus.resolve(ex.getHttpStatus());
+        if (status == null) {
+            status = HttpStatus.BAD_GATEWAY;
+        }
+        return ResponseEntity.status(status)
+                .body(ApiResponse.error(ex.getHttpStatus(), ex.getMessage(), ex.getDetails()));
+    }
+
+    /**
      * 参数校验失败 —— 返回 400
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
